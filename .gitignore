@@ -1,0 +1,12 @@
+/node_modules
+*.keys
+
+/dist
+/prisma
+/tmp
+
+/logs
+/uploads
+/.vscode/settings.json
+api*.json
+.env

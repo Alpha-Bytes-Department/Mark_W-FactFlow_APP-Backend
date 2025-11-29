@@ -1,0 +1,58 @@
+model User {
+  id         String   @id
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  //! auth
+  role        EUserRole @default(USER)
+  email       String?
+  password    String?
+  is_verified Boolean   @default(false)
+  is_active   Boolean   @default(false)
+  is_admin    Boolean   @default(false)
+  otp_id      Int       @default(0)
+  //! end
+
+  //! social
+  fb_id     String?
+  google_id String?
+  //! end
+
+  //! profile
+  avatar String  @default("/images/placeholder.png")
+  name   String  @default("Unknown User")
+  gender EGender @default(OTHER)
+  //! end
+
+  //! payment
+  balance                 Float     @default(0)
+  stripe_customer_id      String?
+  stripe_account_id       String?
+  is_stripe_connected     Boolean   @default(false)
+  subscription_name       String?
+  subscription_expires_at DateTime?
+  //! end
+
+  seen_messages Message[]     @relation("SeenMessages")
+  messages      Message[]
+  chats         Chat[]        @relation("UserChats")
+  transactions  Transaction[]
+
+  @@index([email], name: "idx_user_email")
+  @@index([fb_id], name: "idx_user_fb_id")
+  @@index([google_id], name: "idx_user_google_id")
+  @@index([role], name: "idx_user_role")
+  @@index([stripe_customer_id], name: "idx_user_stripe_customer_id")
+  @@index([stripe_account_id], name: "idx_user_stripe_account_id")
+  @@map("users")
+}
+
+enum EUserRole {
+  USER
+}
+
+enum EGender {
+  MALE
+  FEMALE
+  OTHER
+}
