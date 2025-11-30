@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { UserActivityControllers } from './UserActivity.controller';
 import purifyRequest from '@/middlewares/purifyRequest';
 import { UserActivityValidations } from './UserActivity.validation';
+import { QueryValidations } from '../query/Query.validation';
 
 const admin = Router();
 {
@@ -10,7 +11,10 @@ const admin = Router();
    */
   admin.get(
     '/',
-    purifyRequest(UserActivityValidations.getAllActivity),
+    purifyRequest(
+      QueryValidations.list,
+      UserActivityValidations.getAllActivity,
+    ),
     UserActivityControllers.getAllActivity,
   );
 

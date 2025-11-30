@@ -10,7 +10,7 @@ export const AuthControllers = {
     const user = await AuthServices.login(body);
 
     const { access_token, refresh_token } = AuthServices.retrieveToken(
-      user!.id!,
+      user!.id,
       'access_token',
       'refresh_token',
     );
@@ -18,6 +18,7 @@ export const AuthControllers = {
     AuthServices.setTokens(res, { access_token, refresh_token });
 
     return {
+      track_activity: user!.id,
       message: 'Login successfully!',
       data: { access_token, refresh_token, user },
     };
@@ -43,6 +44,7 @@ export const AuthControllers = {
     AuthServices.setTokens(res, { access_token, refresh_token });
 
     return {
+      track_activity: user.id,
       message: 'Account verified successfully!',
       data: { access_token, refresh_token, user },
     };
@@ -85,6 +87,7 @@ export const AuthControllers = {
     AuthServices.destroyTokens(res, 'reset_token');
 
     return {
+      track_activity: user.id,
       message: 'Password reset successfully!',
       data: { access_token, refresh_token, user: userData },
     };
@@ -112,6 +115,7 @@ export const AuthControllers = {
     });
 
     return {
+      track_activity: user.id,
       message: 'Password changed successfully!',
     };
   }),
@@ -148,6 +152,7 @@ export const AuthControllers = {
     AuthServices.setTokens(res, { access_token, refresh_token });
 
     return {
+      track_activity: user.id,
       message: 'Login successfully!',
       data: { access_token, refresh_token, user },
     };
@@ -165,6 +170,7 @@ export const AuthControllers = {
     AuthServices.setTokens(res, { access_token, refresh_token });
 
     return {
+      track_activity: user.id,
       message: 'Login successfully!',
       data: { access_token, refresh_token, user },
     };

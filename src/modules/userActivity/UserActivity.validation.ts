@@ -6,10 +6,10 @@ export const UserActivityValidations = {
     body: z.object({
       activity_id: z
         .string()
-        .optional()
         .refine(exists('userActivity'), {
           error: ({ input }) => `Activity with id ${input} does not exist.`,
-        }),
+        })
+        .optional(),
       unread: z.boolean().default(false),
     }),
   }),
@@ -18,10 +18,10 @@ export const UserActivityValidations = {
     body: z.object({
       activity_id: z
         .string()
-        .optional()
         .refine(exists('userActivity'), {
           error: ({ input }) => `Activity with id ${input} does not exist.`,
-        }),
+        })
+        .optional(),
     }),
   }),
 
@@ -29,10 +29,10 @@ export const UserActivityValidations = {
     query: z.object({
       user_id: z
         .string()
-        .optional()
         .refine(exists('user'), {
           error: ({ input }) => `User with id ${input} does not exist.`,
-        }),
+        })
+        .optional(),
       unread: z.boolean().optional(),
       start_date: z.iso.date().optional(),
       end_date: z.iso.date().optional(),

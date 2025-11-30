@@ -27,7 +27,7 @@ export const UserActivityServices = {
     activity_id,
     unread,
   }: TToggleUserActivityReadStatus) {
-    return prisma.userActivity.update({
+    return prisma.userActivity.updateMany({
       where: { id: activity_id },
       data: { unread },
     });
@@ -37,7 +37,7 @@ export const UserActivityServices = {
    * Delete activity by ID or delete all activities if no ID is provided
    */
   async deleteActivity({ activity_id }: TDeleteUserActivity) {
-    return prisma.userActivity.delete({
+    return prisma.userActivity.deleteMany({
       where: { id: activity_id },
     });
   },

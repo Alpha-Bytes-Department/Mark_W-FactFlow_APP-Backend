@@ -4,30 +4,35 @@ import { SubscriptionServices } from './Subscription.service';
 import ServerError from '@/errors/ServerError';
 
 export const SubscriptionControllers = {
-  createSubscription: catchAsync(async ({ body }) => {
+  createSubscription: catchAsync(async ({ body, user: admin }) => {
     const data = await SubscriptionServices.createSubscription(body);
 
     return {
+      track_activity: admin.id,
       statusCode: StatusCodes.CREATED,
-      message: 'Subscription created successfully!',
+      message: `Subscription ${data.name} created successfully!`,
       data,
     };
   }),
 
-  editSubscription: catchAsync(async ({ body }) => {
+  editSubscription: catchAsync(async ({ body, user: admin }) => {
     const data = await SubscriptionServices.editSubscription(body);
 
     return {
-      message: 'Subscription updated successfully!',
+      track_activity: admin.id,
+      message: `Subscription ${data.name} updated successfully!`,
       data,
     };
   }),
 
-  deleteSubscription: catchAsync(async ({ body }) => {
-    await SubscriptionServices.deleteSubscription(body.subscription_id);
+  deleteSubscription: catchAsync(async ({ body, user: admin }) => {
+    const data = await SubscriptionServices.deleteSubscription(
+      body.subscription_id,
+    );
 
     return {
-      message: 'Subscription deleted successfully!',
+      track_activity: admin.id,
+      message: `Subscription ${data.name} deleted successfully!`,
     };
   }),
 
@@ -64,6 +69,7 @@ export const SubscriptionControllers = {
     }
 
     return {
+      track_activity: user.id,
       message: 'Subscription checkout url generated successfully!',
       data: { url, amount_total: amount_total && amount_total / 100 },
     };

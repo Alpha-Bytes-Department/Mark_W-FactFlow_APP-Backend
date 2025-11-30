@@ -9,10 +9,10 @@ export type TPagination = {
 };
 
 export type TServeResponse<T> = {
+  track_activity?: string;
   success: boolean;
   statusCode: number;
   message: string;
-  track_activity?: string;
   meta?: Record<string, unknown> & { pagination?: TPagination };
   data?: T;
 };

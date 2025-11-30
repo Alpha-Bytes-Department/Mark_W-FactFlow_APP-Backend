@@ -232,6 +232,8 @@ export const SubscriptionServices = {
     logger.info(
       chalk.red(`❌ Deleted subscription: ${chalk.bold(subscription.name)}`),
     );
+
+    return subscription;
   },
 
   async getAvailableSubscriptions({

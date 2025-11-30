@@ -65,7 +65,8 @@ export const PaymentControllers = {
     });
 
     return {
-      message: 'Withdraw request sent successfully',
+      track_activity: user.id,
+      message: `Withdraw of $${body.amount} request successful`,
       data: {
         available_balance: user.balance - body.amount,
       },
