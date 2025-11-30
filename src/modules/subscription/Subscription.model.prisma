@@ -7,7 +7,7 @@ model Subscription {
   name                   String                @unique
   features               String[]
   price                  Int
-  isHot                  Boolean               @default(false)
+  is_hot                 Boolean               @default(false)
   subscribed_user_count  Int                   @default(0)
   subscription_interval  ESubscriptionInterval
 

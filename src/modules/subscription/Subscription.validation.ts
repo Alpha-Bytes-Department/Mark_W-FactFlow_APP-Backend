@@ -32,8 +32,8 @@ export const SubscriptionValidations = {
             .nonempty('Feature is required'),
         )
         .nonempty('Features are required'),
-      isHot: z.coerce.boolean().optional(),
-    }),
+      is_hot: z.coerce.boolean().optional(),
+    } satisfies TModelZod<TSubscription>),
   }),
 
   editSubscription: z.object({
@@ -49,7 +49,7 @@ export const SubscriptionValidations = {
         .transform(enum_encode)
         .pipe(z.enum(ESubscriptionInterval)),
       features: z.array(z.string()).optional(),
-      isHot: z.coerce.boolean().optional(),
+      is_hot: z.coerce.boolean().optional(),
     } satisfies TModelZod<TSubscription, 'subscription_id'>),
   }),
 
