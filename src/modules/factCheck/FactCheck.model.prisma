@@ -1,0 +1,17 @@
+model FactCheck {
+  id         Int      @id
+  user_id    String
+  verdict    String
+  confidence Float
+  claim      String
+  conclusion String
+  evidence   Json
+  sources    Json
+  timestamp  DateTime
+
+  @@index([user_id], name: "idx_user_id")
+  @@index([verdict], name: "idx_verdict")
+  @@index([timestamp], name: "idx_timestamp")
+  @@index([user_id, timestamp], name: "idx_user_timestamp")
+  @@map("fact_checks")
+}

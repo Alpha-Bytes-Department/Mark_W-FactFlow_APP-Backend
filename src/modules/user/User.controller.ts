@@ -32,6 +32,7 @@ export const UserControllers = {
     return {
       statusCode: StatusCodes.CREATED,
       message: `${capitalize(user.role) ?? 'Unknown'} registered successfully!`,
+      track_activity: user.id,
       data: {
         access_token,
         refresh_token,

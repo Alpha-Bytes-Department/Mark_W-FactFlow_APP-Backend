@@ -12,6 +12,7 @@ export type TServeResponse<T> = {
   success: boolean;
   statusCode: number;
   message: string;
+  track_activity?: string;
   meta?: Record<string, unknown> & { pagination?: TPagination };
   data?: T;
 };

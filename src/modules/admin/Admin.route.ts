@@ -2,10 +2,12 @@ import { Router } from 'express';
 import { UserRoutes } from '../user/User.route';
 import { injectRoutes } from '@/utils/router/injectRouter';
 import { SubscriptionRoutes } from '../subscription/Subscription.route';
+import { UserActivityRoutes } from '../userActivity/UserActivity.route';
 
 const admin = injectRoutes(Router(), {
   '/users': [UserRoutes.admin],
   '/subscriptions': [SubscriptionRoutes.admin],
+  '/user-activities': [UserActivityRoutes.admin],
 });
 
 export const AdminRoutes = {
