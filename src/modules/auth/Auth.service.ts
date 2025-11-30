@@ -143,9 +143,19 @@ export const AuthServices = {
   /**
    * this function sends otp to user
    */
-  async accountVerifyOtpSend({ email }: TAccountVerifyOtpSend) {
+  async accountVerifyOtpSend({ email, phone }: TAccountVerifyOtpSend) {
+    if (!email && !phone) {
+      throw new ZodError(
+        ['email', 'phone'].map(field => ({
+          code: 'custom',
+          message: `Either 'email' or 'phone' is required`,
+          path: [field],
+        })),
+      );
+    }
+
     const user = await prisma.user.findFirst({
-      where: { email },
+      where: { OR: [{ email }, { phone }] },
       select: {
         id: true,
         name: true,
@@ -168,23 +178,39 @@ export const AuthServices = {
       otpId: user.id + user.otp_id,
     });
 
-    await emailQueue.add({
-      to: email,
-      subject: `Your ${config.server.name} Account Verification OTP is ⚡ ${otp} ⚡.`,
-      html: await emailTemplate({
-        userName: user.name,
-        otp,
-        template: 'account_verify',
-      }),
-    });
+    if (email) {
+      await emailQueue.add({
+        to: email,
+        subject: `Your ${config.server.name} Account Verification OTP is ⚡ ${otp} ⚡.`,
+        html: await emailTemplate({
+          userName: user.name,
+          otp,
+          template: 'account_verify',
+        }),
+      });
+    }
+
+    if (phone) {
+      //TODO: add sms service
+    }
   },
 
   /**
    * this function sends otp to user
    */
-  async forgotPassword({ email }: TAccountVerifyOtpSend) {
+  async forgotPassword({ email, phone }: TAccountVerifyOtpSend) {
+    if (!email && !phone) {
+      throw new ZodError(
+        ['email', 'phone'].map(field => ({
+          code: 'custom',
+          message: `Either 'email' or 'phone' is required`,
+          path: [field],
+        })),
+      );
+    }
+
     const user = await prisma.user.findFirst({
-      where: { email },
+      where: { OR: [{ email }, { phone }] },
       select: {
         id: true,
         name: true,
@@ -200,15 +226,21 @@ export const AuthServices = {
       otpId: user.id + user.otp_id,
     });
 
-    await emailQueue.add({
-      to: email,
-      subject: `Your ${config.server.name} Password Reset OTP is ⚡ ${otp} ⚡.`,
-      html: await emailTemplate({
-        userName: user.name,
-        otp,
-        template: 'reset_password',
-      }),
-    });
+    if (email) {
+      await emailQueue.add({
+        to: email,
+        subject: `Your ${config.server.name} Password Reset OTP is ⚡ ${otp} ⚡.`,
+        html: await emailTemplate({
+          userName: user.name,
+          otp,
+          template: 'reset_password',
+        }),
+      });
+    }
+
+    if (phone) {
+      //TODO: add sms service
+    }
   },
 
   /**

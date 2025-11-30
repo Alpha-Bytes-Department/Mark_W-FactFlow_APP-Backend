@@ -25,7 +25,14 @@ export const AuthValidations = {
 
   otpSend: z.object({
     body: z.object({
-      email: z.email({ error: 'Email is invalid' }),
+      email: z.email({ error: 'Email is invalid' }).optional(),
+      phone: z
+        .string()
+        .refine(isValidPhoneNumber, {
+          message: 'Invalid phone number',
+        })
+        .transform(val => parsePhoneNumberWithError(val).number)
+        .optional(),
     }),
   }),
 
