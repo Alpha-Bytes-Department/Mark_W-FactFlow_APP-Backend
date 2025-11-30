@@ -7,40 +7,35 @@ import { injectRoutes } from '@/utils/router/injectRouter';
 import { ChatRoutes } from '@/modules/chat/Chat.route';
 import { MessageRoutes } from '@/modules/message/Message.route';
 import { PaymentRoutes } from '@/modules/payment/Payment.route';
-import capture from '@/middlewares/capture';
-import catchAsync from '@/middlewares/catchAsync';
 import { SubscriptionRoutes } from '@/modules/subscription/Subscription.route';
 import { TransactionRoutes } from '@/modules/transaction/Transaction.route';
+import { authRateLimiter } from '@/modules/auth/Auth.utils';
 
 const appRouter = Router();
 
 //? Media upload endpoint
-appRouter.post(
-  '/upload-media',
-  auth.all,
-  capture({
-    images: {
-      size: 15 * 1024 * 1024,
-      maxCount: 10,
-      fileType: 'images',
-    },
-    videos: {
-      size: 100 * 1024 * 1024,
-      maxCount: 10,
-      fileType: 'videos',
-    },
-  }),
-  catchAsync(({ body }) => {
-    return {
-      message: 'Media uploaded successfully!',
-      data: body,
-    };
-  }),
-);
+//! Disabled for now
+// appRouter.post(
+//   '/upload-media',
+//   auth.all,
+//   capture({
+//     any: {
+//       maxCount: 10,
+//       fileType: 'any',
+//       size: 256 * 1024 * 1024, //? max 256 MB
+//     },
+//   }),
+//   catchAsync(({ body }) => {
+//     return {
+//       message: 'Media uploaded successfully!',
+//       data: body,
+//     };
+//   }),
+// );
 
 export default injectRoutes(appRouter, {
   // no auth required
-  '/auth': [AuthRoutes.free],
+  '/auth': [authRateLimiter, AuthRoutes.free],
   '/payments': [PaymentRoutes.free],
   '/subscriptions': [SubscriptionRoutes.free],
 

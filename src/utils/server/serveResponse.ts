@@ -24,11 +24,16 @@ const serveResponse = <T>(
   res: Response,
   {
     statusCode = StatusCodes.OK,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
     success = true,
     message = 'Success',
     meta,
     data,
   }: Partial<TServeResponse<T>> = {},
-) => res.status(statusCode).json({ success, statusCode, message, meta, data });
+): void => {
+  res.statusMessage = message;
+
+  res.status(statusCode).json(meta ? { meta, data } : data);
+};
 
 export default serveResponse;
