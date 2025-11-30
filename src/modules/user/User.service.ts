@@ -15,7 +15,7 @@ import emailQueue from '@/utils/mq/emailQueue';
 import { errorLogger } from '@/utils/logger';
 import { emailTemplate } from '@/templates/emailTemplate';
 import config from '@/config';
-import stripeAccountConnectQueue from '@/utils/mq/stripeAccountConnectQueue';
+import { ZodError } from 'zod';
 
 /**
  * User services
@@ -48,20 +48,30 @@ export const UserServices = {
    */
   async register({
     email,
+    phone,
     role,
     password,
     ...payload
   }: Omit<Prisma.UserCreateInput, 'id'>) {
+    if (!email && !phone) {
+      throw new ZodError(
+        ['email', 'phone'].map(field => ({
+          code: 'custom',
+          message: `Either 'email' or 'phone' is required`,
+          path: [field],
+        })),
+      );
+    }
+
     const existingUser = await prisma.user.findFirst({
-      where: { email },
-      select: { role: true, is_verified: true, id: true, otp_id: true },
+      where: { OR: [{ email }, { phone }] },
     });
 
     // Check if verified user already exists
     if (!payload.is_admin && existingUser?.is_verified) {
       throw new ServerError(
         StatusCodes.CONFLICT,
-        `${existingUser.role} already exists with this ${email} email.`,
+        `${existingUser.role} already exists with this ${existingUser?.email ? email : existingUser.phone ? phone : 'unknown'}.`,
       );
     }
 
@@ -91,6 +101,7 @@ export const UserServices = {
                   },
             ),
             email,
+            phone,
             role,
             password: hashedPassword,
             ...payload,
@@ -98,35 +109,30 @@ export const UserServices = {
           omit: omitFields,
         });
 
-    //? Queue stripe account creation if needed
-    if (!user.stripe_account_id) {
-      stripeAccountConnectQueue
-        .add({ user_id: user.id })
-        .catch(err =>
-          errorLogger.error('Failed to queue stripe account:', err),
-        );
-    }
-
     // Send verification OTP email
-    if (!user.is_verified && user.email) {
-      const otp = generateOTP({
-        tokenType: 'access_token',
-        otpId: user.id + user.otp_id,
-      });
+    if (!user.is_verified) {
+      if (user.email) {
+        const otp = generateOTP({
+          tokenType: 'access_token',
+          otpId: user.id + user.otp_id,
+        });
 
-      emailQueue
-        .add({
-          to: user.email,
-          subject: `Your ${config.server.name} Account Verification OTP is ⚡ ${otp} ⚡.`,
-          html: await emailTemplate({
-            userName: user.name,
-            otp,
-            template: 'account_verify',
-          }),
-        })
-        .catch(err =>
-          errorLogger.error('Failed to send verification email:', err),
-        );
+        emailQueue
+          .add({
+            to: user.email,
+            subject: `Your ${config.server.name} Account Verification OTP is ⚡ ${otp} ⚡.`,
+            html: await emailTemplate({
+              userName: user.name,
+              otp,
+              template: 'account_verify',
+            }),
+          })
+          .catch(err =>
+            errorLogger.error('Failed to send verification email:', err),
+          );
+      }
+
+      // TODO: do for phone sms as well
     }
 
     return {

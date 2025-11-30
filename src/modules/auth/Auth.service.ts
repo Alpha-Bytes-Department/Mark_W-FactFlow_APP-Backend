@@ -23,6 +23,7 @@ import { TToken } from '@/types/auth.types';
 import { facebookUser, googleUser } from './Auth.lib';
 import { downloadFile } from '@/middlewares/capture';
 import { UserServices } from '../user/User.service';
+import { ZodError } from 'zod';
 
 /**
  * Authentication services
@@ -31,9 +32,19 @@ export const AuthServices = {
   /**
    * Login user using email and password
    */
-  async login({ password, email }: TUserLogin) {
+  async login({ password, email, phone }: TUserLogin) {
+    if (!email && !phone) {
+      throw new ZodError(
+        ['email', 'phone'].map(field => ({
+          code: 'custom',
+          message: `Either 'email' or 'phone' is required`,
+          path: [field],
+        })),
+      );
+    }
+
     const user = await prisma.user.findFirst({
-      where: { email },
+      where: { OR: [{ email }, { phone }] },
       select: {
         id: true,
         password: true,
@@ -205,11 +216,22 @@ export const AuthServices = {
    */
   async userOtpVerify({
     email,
+    phone,
     otp,
     token_type = 'access_token',
   }: TAccountVerify & { token_type: TToken }) {
+    if (!email && !phone) {
+      throw new ZodError(
+        ['email', 'phone'].map(field => ({
+          code: 'custom',
+          message: `Either 'email' or 'phone' is required`,
+          path: [field],
+        })),
+      );
+    }
+
     const user = await prisma.user.findFirst({
-      where: { email },
+      where: { OR: [{ email }, { phone }] },
       select: {
         id: true,
         role: true,
@@ -217,8 +239,9 @@ export const AuthServices = {
       },
     });
 
-    if (!user)
+    if (!user) {
       throw new ServerError(StatusCodes.NOT_FOUND, "User doesn't exist");
+    }
 
     if (
       !validateOTP({
@@ -226,8 +249,9 @@ export const AuthServices = {
         tokenType: token_type,
         otpId: user.id + user.otp_id,
       })
-    )
+    ) {
       throw new ServerError(StatusCodes.UNAUTHORIZED, 'Incorrect OTP');
+    }
 
     return prisma.user.update({
       where: { id: user.id },

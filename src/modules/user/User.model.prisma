@@ -6,6 +6,7 @@ model User {
   //! auth
   role        EUserRole @default(USER)
   email       String?
+  phone       String?
   password    String?
   is_verified Boolean   @default(false)
   is_active   Boolean   @default(false)

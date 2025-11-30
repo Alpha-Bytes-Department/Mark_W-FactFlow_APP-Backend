@@ -2,12 +2,24 @@ import { z } from 'zod';
 import { EGender, EUserRole, User as TUser } from '@/utils/db';
 import { enum_encode } from '@/utils/transform/enum';
 import { TModelZod } from '@/types/zod';
+import {
+  parsePhoneNumberWithError,
+  isValidPhoneNumber,
+} from 'libphonenumber-js';
 
 export const UserValidations = {
   userRegister: z.object({
     body: z.object({
       role: z.literal(EUserRole.USER).default(EUserRole.USER),
-      email: z.email({ error: 'Email is invalid' }),
+      email: z.email({ error: 'Email is invalid' }).optional(),
+      phone: z
+        .string()
+        .optional()
+        .refine(phone => (phone ? isValidPhoneNumber(phone) : true), {
+          message: 'Invalid phone number',
+        })
+        .transform(val => (val ? parsePhoneNumberWithError(val).number : val)) //? Transform to E.164 format
+        .optional(),
       password: z
         .string({ error: 'Password is missing' })
         .min(6, 'Password must be at least 6 characters long'),
