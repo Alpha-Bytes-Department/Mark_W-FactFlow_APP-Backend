@@ -1,10 +1,10 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import inquirer from 'inquirer';
-import config from '@/config';
-import { prisma } from '@/utils/db';
+import { Prisma, prisma } from '@/utils/db';
 import { hashPassword } from '../auth/Auth.utils';
-import { UserServices } from '../user/User.service';
+import { TAdminOverviewArgs } from './Admin.interface';
+import { adminOverviewGroupBy } from './Admin.constant';
 
 /**
  * Admin services
@@ -125,17 +125,6 @@ export const AdminServices = {
             is_verified: true,
           },
         });
-      } else {
-        // Create new admin user
-        await UserServices.register({
-          name,
-          email,
-          password,
-          avatar: config.server.default_avatar,
-          is_active: true,
-          is_verified: true,
-          is_admin: true,
-        });
       }
 
       spinner.succeed(chalk.green('Admin user created successfully!'));
@@ -143,5 +132,129 @@ export const AdminServices = {
       spinner.fail(chalk.red(`Failed to seed admin user: ${error.message}`));
       throw error;
     }
+  },
+
+  async overview({ end_date, group_by, start_date }: TAdminOverviewArgs) {
+    const grouping: keyof typeof adminOverviewGroupBy =
+      (group_by as any) || 'days';
+
+    const now = new Date();
+    let start: Date;
+    let end: Date;
+
+    if (start_date) {
+      start = new Date(start_date);
+    } else {
+      if (grouping === 'days') {
+        start = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0),
+        );
+      } else if (grouping === 'months') {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 0, 1, 0, 0, 0));
+      } else {
+        start = new Date(Date.UTC(now.getUTCFullYear() - 4, 0, 1, 0, 0, 0));
+      }
+    }
+
+    if (end_date) {
+      end = new Date(end_date);
+    } else {
+      if (grouping === 'days') {
+        end = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59),
+        );
+      } else if (grouping === 'months') {
+        end = new Date(Date.UTC(now.getUTCFullYear(), 11, 31, 23, 59, 59));
+      } else {
+        end = new Date(Date.UTC(now.getUTCFullYear(), 11, 31, 23, 59, 59));
+      }
+    }
+
+    const whereUser: Prisma.UserWhereInput = {
+      created_at: {
+        gte: start,
+        lte: end,
+      },
+    };
+
+    const users = await prisma.user.findMany({
+      where: whereUser,
+      select: { created_at: true },
+    });
+
+    let labels: string[] = [];
+    const countsMap = new Map<string, number>();
+
+    if (grouping === 'days') {
+      labels = adminOverviewGroupBy.days;
+      for (const label of labels) countsMap.set(label, 0);
+      for (const u of users) {
+        const d = u.created_at.getUTCDate().toString();
+        if (countsMap.has(d)) countsMap.set(d, (countsMap.get(d) || 0) + 1);
+      }
+    } else if (grouping === 'months') {
+      labels = adminOverviewGroupBy.months;
+      for (const label of labels) countsMap.set(label, 0);
+      for (const u of users) {
+        const m = u.created_at.toLocaleString('en-US', {
+          month: 'short',
+          timeZone: 'UTC',
+        });
+        if (countsMap.has(m)) countsMap.set(m, (countsMap.get(m) || 0) + 1);
+      }
+    } else {
+      labels = [...adminOverviewGroupBy.years].reverse();
+      for (const label of labels) countsMap.set(label, 0);
+      for (const u of users) {
+        const y = u.created_at.getUTCFullYear().toString();
+        if (countsMap.has(y)) countsMap.set(y, (countsMap.get(y) || 0) + 1);
+      }
+    }
+
+    const counts = labels.map(l => countsMap.get(l) || 0);
+    const total = users.length;
+
+    let growth_percentage: number | null = null;
+    if (users.length > 1) {
+      const midpoint = start.getTime() + (end.getTime() - start.getTime()) / 2;
+      const firstHalf = users.filter(
+        u => u.created_at.getTime() <= midpoint,
+      ).length;
+      const secondHalf = total - firstHalf;
+      if (firstHalf > 0) {
+        growth_percentage = ((secondHalf - firstHalf) / firstHalf) * 100;
+      }
+    }
+
+    const total_user = await prisma.user.count();
+
+    const total_income = await prisma.transaction.aggregate({
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const total_new_users = await prisma.user.count({
+      where: {
+        created_at: {
+          gte: new Date(
+            new Date().getFullYear(),
+            new Date().getMonth() - 1,
+            new Date().getDate(),
+          ),
+        },
+      },
+    });
+
+    return {
+      range: { start_date: start.toISOString(), end_date: end.toISOString() },
+      group_by: grouping,
+      labels,
+      counts,
+      growth_percentage,
+      total_user,
+      total_new_users,
+      total_income: total_income._sum.amount || 0,
+    };
   },
 };

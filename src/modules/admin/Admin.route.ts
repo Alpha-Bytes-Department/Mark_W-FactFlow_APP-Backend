@@ -4,6 +4,9 @@ import { injectRoutes } from '@/utils/router/injectRouter';
 import { SubscriptionRoutes } from '../subscription/Subscription.route';
 import { UserActivityRoutes } from '../userActivity/UserActivity.route';
 import { ContextPageRoutes } from '../contextPage/ContextPage.route';
+import { AdminControllers } from './Admin.controller';
+import purifyRequest from '@/middlewares/purifyRequest';
+import { AdminValidations } from './Admin.validation';
 
 const admin = injectRoutes(Router(), {
   '/users': [UserRoutes.admin],
@@ -11,6 +14,13 @@ const admin = injectRoutes(Router(), {
   '/user-activities': [UserActivityRoutes.admin],
   '/context-pages': [ContextPageRoutes.admin],
 });
+{
+  admin.get(
+    '/overview',
+    purifyRequest(AdminValidations.overview),
+    AdminControllers.overview,
+  );
+}
 
 export const AdminRoutes = {
   /**

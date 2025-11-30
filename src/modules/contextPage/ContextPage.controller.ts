@@ -28,7 +28,7 @@ export const ContextPageControllers = {
 
     return {
       message: `${params.page_name} retrieved successfully!`,
-      data: data.content,
+      data,
     };
   }),
 };
