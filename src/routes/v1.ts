@@ -11,6 +11,7 @@ import { SubscriptionRoutes } from '@/modules/subscription/Subscription.route';
 import { TransactionRoutes } from '@/modules/transaction/Transaction.route';
 import { authRateLimiter } from '@/modules/auth/Auth.utils';
 import { ContextPageRoutes } from '@/modules/contextPage/ContextPage.route';
+import { MailRoutes } from '@/modules/mail/Mail.route';
 
 const appRouter = Router();
 
@@ -40,6 +41,7 @@ export default injectRoutes(appRouter, {
   '/payments': [PaymentRoutes.free],
   '/subscriptions': [SubscriptionRoutes.free],
   '/context-pages': [ContextPageRoutes.user],
+  '/mails': [MailRoutes.free],
 
   // all user can access
   '/profile': [auth.default, UserRoutes.all],

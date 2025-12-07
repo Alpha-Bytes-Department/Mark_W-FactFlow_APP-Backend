@@ -7,12 +7,14 @@ import { ContextPageRoutes } from '../contextPage/ContextPage.route';
 import { AdminControllers } from './Admin.controller';
 import purifyRequest from '@/middlewares/purifyRequest';
 import { AdminValidations } from './Admin.validation';
+import { MailRoutes } from '../mail/Mail.route';
 
 const admin = injectRoutes(Router(), {
   '/users': [UserRoutes.admin],
   '/subscriptions': [SubscriptionRoutes.admin],
   '/user-activities': [UserActivityRoutes.admin],
   '/context-pages': [ContextPageRoutes.admin],
+  '/mails': [MailRoutes.admin],
 });
 {
   admin.get(
