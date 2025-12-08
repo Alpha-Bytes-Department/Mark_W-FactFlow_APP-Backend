@@ -53,7 +53,7 @@ export const UserServices = {
     password,
     ...payload
   }: Omit<Prisma.UserCreateInput, 'id'>) {
-    if (!email && !phone) {
+    if (!(payload.google_id || payload.fb_id || email || phone)) {
       throw new ZodError(
         ['email', 'phone'].map(field => ({
           code: 'custom',
