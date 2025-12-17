@@ -2,6 +2,10 @@
 import fs from 'fs';
 import { envPath } from '@/config/configure';
 import chalk from 'chalk';
+import { fileURLToPath } from 'url';
+
+// Simulate __dirname for ESM
+const __filename = fileURLToPath(import.meta.url);
 
 /**
  * Retrieves an environment variable with type checking, error handling, and appending to .env if not found

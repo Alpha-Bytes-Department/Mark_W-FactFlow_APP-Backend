@@ -31,8 +31,8 @@
     "prisma-generate": "npx prisma generate",
     "prisma-clean": "rm -rf prisma/client",
     "prisma-seed": "npx prisma db seed",
-    "env-encrypt": "npx dotenvx encrypt -f .env",
-    "env-decrypt": "npx dotenvx decrypt -f .env"
+    "env-encrypt": "npx dotenvx encrypt -f .env.production",
+    "env-decrypt": "npx dotenvx decrypt -f .env.production"
   },
   "keywords": [
     "express-boilerplate",
