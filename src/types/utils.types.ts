@@ -30,6 +30,4 @@ export type TValidateOTP = (args: {
 
 export type TCleanupFunction = () => void;
 
-export type TServer = HTTPServer & {
-  addPlugins: (...plugins: TCleanupFunction[]) => void;
-};
+export type TServer = HTTPServer;
