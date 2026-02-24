@@ -7,7 +7,6 @@ import { enum_decode } from '@/utils/transform/enum';
 import { capitalize } from '@/utils/transform/capitalize';
 import { stripe } from '../payment/Payment.utils';
 import ServerError from '@/errors/ServerError';
-import stripeAccountConnectQueue from '@/utils/mq/stripeAccountConnectQueue';
 import config from '@/config';
 import { userSelfOmit } from './User.constant';
 
@@ -147,7 +146,7 @@ export const UserControllers = {
    */
   connectStripeAccount: catchAsync(async ({ user }) => {
     if (!user.stripe_account_id) {
-      await stripeAccountConnectQueue.add({ user_id: user.id });
+      await UserServices.stripeAccountConnect(user.id);
 
       return {
         statusCode: StatusCodes.ACCEPTED,

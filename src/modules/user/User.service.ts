@@ -5,17 +5,21 @@ import {
 } from './User.constant';
 import { EUserRole, Prisma, prisma, User as TUser } from '@/utils/db';
 import { TPagination } from '@/utils/server/serveResponse';
-import deleteFilesQueue from '@/utils/mq/deleteFilesQueue';
 import type { TUserEdit } from './User.interface';
 import ServerError from '@/errors/ServerError';
 import { StatusCodes } from 'http-status-codes';
 import { hashPassword } from '../auth/Auth.utils';
 import { generateOTP } from '@/utils/crypto/otp';
-import emailQueue from '@/utils/mq/emailQueue';
 import { errorLogger } from '@/utils/logger';
 import { emailTemplate } from '@/templates/emailTemplate';
 import config from '@/config';
 import { ZodError } from 'zod';
+import { sendEmail } from '@/utils/sendMail';
+import { deleteFiles } from '@/middlewares/capture';
+import ora from 'ora';
+import Stripe from 'stripe';
+import { stripe } from '../payment/Payment.utils';
+import chalk from 'chalk';
 
 /**
  * User services
@@ -117,19 +121,17 @@ export const UserServices = {
           otpId: user.id + user.otp_id,
         });
 
-        emailQueue
-          .add({
-            to: user.email,
-            subject: `Your ${config.server.name} Account Verification OTP is ⚡ ${otp} ⚡.`,
-            html: await emailTemplate({
-              userName: user.name,
-              otp,
-              template: 'account_verify',
-            }),
-          })
-          .catch(err =>
-            errorLogger.error('Failed to send verification email:', err),
-          );
+        sendEmail({
+          to: user.email,
+          subject: `Your ${config.server.name} Account Verification OTP is ⚡ ${otp} ⚡.`,
+          html: await emailTemplate({
+            userName: user.name,
+            otp,
+            template: 'account_verify',
+          }),
+        }).catch(err =>
+          errorLogger.error('Failed to send verification email:', err),
+        );
       }
 
       // TODO: do for phone sms as well
@@ -145,7 +147,11 @@ export const UserServices = {
   async updateUser({ user, body }: { user: Partial<TUser>; body: TUserEdit }) {
     const data: Prisma.UserUpdateInput = body;
 
-    if (body.avatar && user.avatar) await deleteFilesQueue.add([user.avatar]);
+    if (body.avatar && user.avatar) {
+      deleteFiles([user.avatar]).catch(err =>
+        errorLogger.error('Failed to delete old avatar:', err),
+      );
+    }
 
     if (body.role && body.role !== user.role)
       data.id = await this.getNextUserId({ role: body.role });
@@ -222,8 +228,60 @@ export const UserServices = {
   async deleteAccount(userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
-    if (user?.avatar) await deleteFilesQueue.add([user.avatar]);
+    if (user?.avatar) {
+      deleteFiles([user.avatar]).catch(err =>
+        errorLogger.error('Failed to delete user avatar:', err),
+      );
+    }
 
     return prisma.user.delete({ where: { id: userId } });
+  },
+
+  async stripeAccountConnect(user_id: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: user_id },
+      select: {
+        stripe_account_id: true,
+        email: true,
+      },
+    });
+
+    if (!user) return;
+
+    if (!user.stripe_account_id) {
+      const spinner = ora({
+        color: 'yellow',
+        text: `Checking Stripe account for ${user.email}`,
+      }).start();
+
+      try {
+        const accountPayload: Stripe.AccountCreateParams = {
+          type: 'express',
+          capabilities: {
+            transfers: { requested: true },
+          },
+        };
+
+        if (user.email) {
+          accountPayload.email = user.email;
+        }
+
+        const stripeAccount = await stripe.accounts.create(accountPayload);
+
+        await prisma.user.update({
+          where: { id: user_id },
+          data: { stripe_account_id: stripeAccount.id },
+        });
+
+        spinner.succeed(`Stripe account created for ${user.email}`);
+      } catch (error) {
+        spinner.fail(`Failed creating Stripe account for ${user.email}`);
+
+        errorLogger.error(
+          chalk.red(`Error creating Stripe account for ${user.email}`),
+          error,
+        );
+      }
+    }
   },
 };

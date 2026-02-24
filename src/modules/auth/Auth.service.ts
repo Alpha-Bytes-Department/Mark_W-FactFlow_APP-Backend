@@ -12,7 +12,7 @@ import { prisma, type User as TUser } from '@/utils/db';
 import ServerError from '@/errors/ServerError';
 import { StatusCodes } from 'http-status-codes';
 import config from '@/config';
-import emailQueue from '@/utils/mq/emailQueue';
+import { sendEmail } from '@/utils/sendMail';
 import { emailTemplate } from '@/templates/emailTemplate';
 import { errorLogger } from '@/utils/logger';
 import ms from 'ms';
@@ -79,7 +79,7 @@ export const AuthServices = {
 
       try {
         if (email)
-          await emailQueue.add({
+          sendEmail({
             to: email,
             subject: `Your ${config.server.name} Account Verification OTP is ⚡ ${otp} ⚡.`,
             html: await emailTemplate({
@@ -87,6 +87,8 @@ export const AuthServices = {
               otp,
               template: 'account_verify',
             }),
+          }).catch(err => {
+            errorLogger.error('Failed to send verification email:', err);
           });
       } catch (error) {
         if (error instanceof Error) {
@@ -179,7 +181,7 @@ export const AuthServices = {
     });
 
     if (email) {
-      await emailQueue.add({
+      sendEmail({
         to: email,
         subject: `Your ${config.server.name} Account Verification OTP is ⚡ ${otp} ⚡.`,
         html: await emailTemplate({
@@ -187,6 +189,8 @@ export const AuthServices = {
           otp,
           template: 'account_verify',
         }),
+      }).catch(err => {
+        errorLogger.error('Failed to send verification email:', err);
       });
     }
 
@@ -227,7 +231,7 @@ export const AuthServices = {
     });
 
     if (email) {
-      await emailQueue.add({
+      sendEmail({
         to: email,
         subject: `Your ${config.server.name} Password Reset OTP is ⚡ ${otp} ⚡.`,
         html: await emailTemplate({
@@ -235,6 +239,8 @@ export const AuthServices = {
           otp,
           template: 'reset_password',
         }),
+      }).catch(err => {
+        errorLogger.error('Failed to send reset password email:', err);
       });
     }
 

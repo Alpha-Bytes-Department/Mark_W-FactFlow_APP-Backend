@@ -6,9 +6,10 @@ import type {
   TDeleteMessageArgs,
   TGetChatMessagesArgs,
 } from './Message.interface';
-import deleteFilesQueue from '@/utils/mq/deleteFilesQueue';
 import { messageSearchableFields } from './Message.constant';
 import type { TPagination } from '@/utils/server/serveResponse';
+import { deleteFiles } from '@/middlewares/capture';
+import { errorLogger } from '@/utils/logger';
 
 /**
  * All message related services
@@ -72,7 +73,9 @@ export const MessageServices = {
       throw new ServerError(StatusCodes.BAD_REQUEST, 'Message already deleted');
     }
 
-    await deleteFilesQueue.add(message.media_urls);
+    deleteFiles(message.media_urls).catch(err =>
+      errorLogger.error('Failed to delete message media files:', err),
+    );
 
     return prisma.message.update({
       where: { id: message_id },

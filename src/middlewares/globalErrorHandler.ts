@@ -15,7 +15,7 @@ import {
   handlePrismaRequestError,
   handlePrismaValidationError,
 } from '@/errors/handlePrismaErrors';
-import deleteFilesQueue from '@/utils/mq/deleteFilesQueue';
+import { deleteFiles } from './capture';
 
 /**
  * Default error handler
@@ -32,7 +32,11 @@ export const defaultError: TErrorHandler = {
  */
 const globalErrorHandler: ErrorRequestHandler = async (error, req, res, _) => {
   /** delete uploaded files */
-  if (req.tempFiles) await deleteFilesQueue.add(req.tempFiles);
+  if (req.tempFiles) {
+    deleteFiles(req.tempFiles).catch(err =>
+      errorLogger.error('Failed to delete temp files:', err),
+    );
+  }
 
   if (config.server.isDevelopment)
     console.log(chalk.red('🚨 globalErrorHandler ~~ '), error);
