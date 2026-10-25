@@ -17,7 +17,7 @@ const selfOmit = {
   otp_id: true,
   stripe_account_id: true,
   stripe_customer_id: true,
-  subscription_expires_at: true,
+  revenuecat_customer_id: true,
   fb_id: true,
   google_id: true,
 } satisfies Prisma.UserOmit;

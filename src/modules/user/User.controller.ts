@@ -106,13 +106,22 @@ export const UserControllers = {
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   profile: catchAsync(async ({ user }) => {
+    const profileData = await prisma.user.findUnique({
+      where: { id: user.id },
+      omit: userSelfOmit[user.role],
+    });
+
+    const is_subscribed = Boolean(
+      profileData?.subscription_name &&
+        profileData?.subscription_expires_at &&
+        profileData.subscription_expires_at > new Date(),
+    );
+
     return {
       message: 'Profile retrieved successfully!',
       data: {
-        ...(await prisma.user.findUnique({
-          where: { id: user.id },
-          omit: userSelfOmit[user.role],
-        })),
+        ...profileData,
+        is_subscribed,
         role: user.role.toLowerCase(),
       },
     };

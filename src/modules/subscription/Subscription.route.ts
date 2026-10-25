@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { SubscriptionControllers } from './Subscription.controller';
+import { RevenueCatControllers } from './RevenueCat.controller';
 import { SubscriptionValidations } from './Subscription.validation';
 import purifyRequest from '@/middlewares/purifyRequest';
 import { QueryValidations } from '../query/Query.validation';
@@ -28,6 +29,20 @@ const admin = Router();
 
 const free = Router();
 {
+  /**
+   * RevenueCat Webhook (called by RevenueCat servers)
+   */
+  free.post('/revenuecat/webhook', RevenueCatControllers.webhook);
+
+  /**
+   * RevenueCat Sync for Flutter app (authenticated)
+   */
+  free.post('/revenuecat/sync', auth.all, RevenueCatControllers.sync);
+
+  /**
+   * Check subscription status (authenticated)
+   */
+  free.get('/status', auth.all, RevenueCatControllers.status);
   free.get(
     '/',
     purifyRequest(

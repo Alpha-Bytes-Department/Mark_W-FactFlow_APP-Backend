@@ -209,6 +209,10 @@ const config = {
         ),
       ),
     },
+    revenuecat: {
+      webhook_auth_key: process.env.REVENUECAT_WEBHOOK_AUTH_KEY ?? '',
+      secret_key: process.env.REVENUECAT_SECRET_KEY ?? '',
+    },
   },
 };
 

@@ -32,6 +32,7 @@ model User {
   is_stripe_connected     Boolean   @default(false)
   subscription_name       String?
   subscription_expires_at DateTime?
+  revenuecat_customer_id  String?
   //! end
 
   seen_messages Message[]     @relation("SeenMessages")
@@ -45,6 +46,7 @@ model User {
   @@index([role], name: "idx_user_role")
   @@index([stripe_customer_id], name: "idx_user_stripe_customer_id")
   @@index([stripe_account_id], name: "idx_user_stripe_account_id")
+  @@index([revenuecat_customer_id], name: "idx_user_revenuecat_customer_id")
   @@map("users")
 }
 
